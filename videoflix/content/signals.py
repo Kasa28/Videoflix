@@ -1,6 +1,6 @@
 import os
 
-from .tasks import convert_480p
+from .tasks import convert_to_hls
 from .models import Video
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, post_save
@@ -14,7 +14,7 @@ def video_post_save(sender, instance, created, **kwargs):
     if created:
         print('New video created')
         queue = django_rq.get_queue('default', autocommit=True)
-        queue.enqueue(convert_480p, instance.video_file.path)
+        queue.enqueue(convert_to_hls, instance.video_file.path)
 
 
 
