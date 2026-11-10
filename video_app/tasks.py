@@ -1,42 +1,49 @@
 import subprocess
 from pathlib import Path
+from django.conf import settings
+from .models import Video
+from .utils import HLS_RESOLUTIONS, video_output_directory
+
+def process_video(video_id):
+    video = Video.objects.get(id=video_id)
+    source = Path(video.video_file.path)
+    folder = video_output_directory(source)
+    folder.mkdir(parents=True, exist_ok=True)
+    create_thumbnail(source, folder)
+    for resolution, height in HLS_RESOLUTIONS.items():
+        create_hls(source, folder, resolution, height)
+    save_thumbnail(video, folder / "thumbnail.jpg")
 
 
-def convert_480p(source):
-    target = source + "_480p.mp4"
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i", source,
-        "-s", "hd480",
-        "-c:v", "libx264",
-        "-crf", "23",
-        "-c:a", "aac",
-        target,
-    ]
-
-    subprocess.run(cmd, check=True)
-
-
-def convert_to_hls(source):
-    source_path = Path(source)
-    output_directory = source_path.parent / source_path.stem
-    output_directory.mkdir(parents=True, exist_ok=True)
-
-    playlist_path = output_directory / "index.m3u8"
-    segment_path = output_directory / "segment_%03d.ts"
-
+def create_thumbnail(source, folder):
     command = [
-        "ffmpeg",
-        "-y",
-        "-i", str(source_path),
-        "-c", "copy",
-        "-start_number", "0",
-        "-hls_time", "10",
-        "-hls_list_size", "0",
-        "-hls_segment_filename", str(segment_path),
-        "-f", "hls",
-        str(playlist_path),
+        "ffmpeg", "-y", "-ss", "00:00:01",
+        "-i", str(source), "-frames:v", "1",
+        "-q:v", "2", str(folder / "thumbnail.jpg")
+    ]
+    subprocess.run(command, check=True)
+
+
+def create_hls(source, folder, resolution, height):
+    target = folder / resolution
+    target.mkdir(parents=True, exist_ok=True)
+    command = hls_command(source, target, height)
+    subprocess.run(command, check=True)
+
+
+def hls_command(source, target, height):
+    return [
+        "ffmpeg", "-y", "-i", str(source),
+        "-vf", f"scale=-2:{height}",
+        "-c:v", "libx264", "-crf", "23",
+        "-preset", "fast", "-c:a", "aac",
+        "-hls_time", "10", "-hls_list_size", "0",
+        "-hls_segment_filename", str(target / "segment_%03d.ts"),
+        "-f", "hls", str(target / "index.m3u8")
     ]
 
-    subprocess.run(command, check=True)
+
+def save_thumbnail(video, thumbnail):
+    path = thumbnail.relative_to(settings.MEDIA_ROOT)
+    video.thumbnail.name = path.as_posix()
+    video.save(update_fields=["thumbnail"])
