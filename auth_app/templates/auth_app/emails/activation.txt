@@ -1,0 +1,4 @@
+Welcome to Videoflix!
+
+Activate your account using this link:
+{{ action_url }}
