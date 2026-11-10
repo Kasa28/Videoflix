@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_rq',
     'videoflix.content.apps.ContentConfig',
+    'import_export',
 ]
 
 MIDDLEWARE = [
