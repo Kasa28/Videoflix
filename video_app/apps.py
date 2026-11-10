@@ -1,9 +1,11 @@
 from django.apps import AppConfig
 
 
-class ContentConfig(AppConfig):
+class VideoAppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'videoflix.content'
+    name = 'video_app'
+    label = 'content'
+    verbose_name = 'Videos'
 
     def ready(self):
         from . import signals 

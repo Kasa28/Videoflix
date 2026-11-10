@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_rq',
-    'videoflix.content.apps.ContentConfig',
+    'video_app.apps.VideoAppConfig',
+    'auth_app.apps.AuthAppConfig',
     'import_export',
 ]
 
@@ -166,7 +167,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "videoflix" / "content" / "media"
+MEDIA_ROOT = BASE_DIR / "video_app" / "media"
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
