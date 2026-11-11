@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 
 User = get_user_model()
 
+
 class RegistrationTests(APITestCase):
     """Verify registration validation and user creation."""
 
@@ -24,8 +25,12 @@ class RegistrationTests(APITestCase):
         }
         response = self.client.post("/api/register/", payload, format="json")
         user = User.objects.get(email="new@example.com")
+        self.assert_registered_user(response, user, payload["password"])
+
+    def assert_registered_user(self, response, user, password):
+        """Verify the stored user and the public registration response."""
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(user.check_password(payload["password"]))
+        self.assertTrue(user.check_password(password))
         self.assertEqual(user.username, user.email)
         self.assertFalse(user.is_active)
         self.assertNotIn("password", response.data)
