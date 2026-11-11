@@ -2,6 +2,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,9 +14,16 @@ from .serializers import (LoginSerializer, PasswordConfirmSerializer, PasswordRe
 
 User = get_user_model()
 
-class RegisterView(APIView):
-    """Create an inactive user and send an account activation email."""
+
+class PublicAPIView(APIView):
+    """Allow public access without evaluating a stale access-token cookie."""
+
+    authentication_classes = []
     permission_classes = [AllowAny]
+
+
+class RegisterView(PublicAPIView):
+    """Create an inactive user and send an account activation email."""
 
     def post(self, request):
         """Validate registration data and return the created user."""
@@ -29,9 +37,8 @@ class RegisterView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
-class ActivateView(APIView):
+class ActivateView(PublicAPIView):
     """Activate a user account with an emailed one-time token."""
-    permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
         """Validate the activation token and enable the user account."""
@@ -43,21 +50,22 @@ class ActivateView(APIView):
         return Response({"message": "Account successfully activated."})
 
 
-class LoginView(APIView):
+class LoginView(PublicAPIView):
     """Authenticate an active user and set HttpOnly JWT cookies."""
-    permission_classes = [AllowAny]
 
     def post(self, request):
         """Validate credentials and start a cookie-based session."""
         serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except AuthenticationFailed as error:
+            return Response({"detail": str(error.detail)}, status=401)
         user = serializer.validated_data["user"]
         return create_login_response(user)
 
 
-class RefreshView(APIView):
+class RefreshView(PublicAPIView):
     """Issue a new access token from the refresh-token cookie."""
-    permission_classes = [AllowAny]
 
     def post(self, request):
         """Validate the refresh cookie and replace the access cookie."""
@@ -73,9 +81,8 @@ class RefreshView(APIView):
         return response
 
 
-class LogoutView(APIView):
+class LogoutView(PublicAPIView):
     """Blacklist the refresh token and remove authentication cookies."""
-    permission_classes = [AllowAny]
 
     def post(self, request):
         """Invalidate the current refresh token and end the session."""
@@ -91,9 +98,8 @@ class LogoutView(APIView):
         return response
 
 
-class PasswordResetView(APIView):
+class PasswordResetView(PublicAPIView):
     """Send a password-reset email without exposing account existence."""
-    permission_classes = [AllowAny]
 
     def post(self, request):
         """Validate the email and send a reset link when a user exists."""
@@ -108,9 +114,8 @@ class PasswordResetView(APIView):
         })
 
 
-class PasswordConfirmView(APIView):
+class PasswordConfirmView(PublicAPIView):
     """Store a new password after validating a reset token."""
-    permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
         """Validate token and password data before updating the user."""

@@ -42,3 +42,14 @@ class RegistrationTests(APITestCase):
         response = self.client.post("/api/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("non_field_errors", response.data)
+
+    def test_registration_ignores_stale_access_cookie(self):
+        """A stale session cookie cannot block the public registration view."""
+        self.client.cookies["access_token"] = "expired-token"
+        payload = {
+            "email": "stale-cookie@example.com",
+            "password": "StrongPass456!",
+            "confirmed_password": "StrongPass456!",
+        }
+        response = self.client.post("/api/register/", payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
