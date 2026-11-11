@@ -192,6 +192,8 @@ Deleting a video through Django also removes its original file and generated out
 
 All endpoints are prefixed with `/api/`.
 
+Detailed request and response examples are available in [docs/API.md](docs/API.md).
+
 ### Authentication
 
 | Method | Endpoint | Description | Authentication |
