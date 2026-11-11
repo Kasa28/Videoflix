@@ -1,3 +1,1 @@
-from django.shortcuts import render
-
-# Create your views here.
+"""Browser views are not required; videos are exposed via the REST API."""

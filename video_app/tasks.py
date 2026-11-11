@@ -1,3 +1,4 @@
+"""Background tasks for thumbnail generation and HLS conversion."""
 import subprocess
 from pathlib import Path
 from django.conf import settings
@@ -5,6 +6,7 @@ from .models import Video
 from .utils import HLS_RESOLUTIONS, video_output_directory
 
 def process_video(video_id):
+    """Generate a thumbnail and all supported HLS video renditions."""
     video = Video.objects.get(id=video_id)
     source = Path(video.video_file.path)
     folder = video_output_directory(source)
@@ -16,6 +18,7 @@ def process_video(video_id):
 
 
 def create_thumbnail(source, folder):
+    """Extract one JPEG preview frame from the source video."""
     command = [
         "ffmpeg", "-y", "-ss", "00:00:01",
         "-i", str(source), "-frames:v", "1",
@@ -25,6 +28,7 @@ def create_thumbnail(source, folder):
 
 
 def create_hls(source, folder, resolution, height):
+    """Create one HLS rendition at the requested output height."""
     target = folder / resolution
     target.mkdir(parents=True, exist_ok=True)
     command = hls_command(source, target, height)
@@ -32,6 +36,7 @@ def create_hls(source, folder, resolution, height):
 
 
 def hls_command(source, target, height):
+    """Build a resource-limited FFmpeg command for HLS output."""
     return [
         "ffmpeg", "-y", "-threads", "2", "-i", str(source),
         "-map", "0:v:0", "-map", "0:a?", "-filter_threads", "1",
@@ -45,6 +50,7 @@ def hls_command(source, target, height):
 
 
 def save_thumbnail(video, thumbnail):
+    """Store the generated thumbnail path on the video record."""
     path = thumbnail.relative_to(settings.MEDIA_ROOT)
     video.thumbnail.name = path.as_posix()
     video.save(update_fields=["thumbnail"])

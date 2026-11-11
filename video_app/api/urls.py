@@ -1,3 +1,4 @@
+"""URL routes for video metadata and protected HLS streaming."""
 from django.urls import path
 from .views import VideoPartView, VideoPlaylistView, VideoSegmentView
 

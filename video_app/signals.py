@@ -1,3 +1,4 @@
+"""Signals that enqueue processing and remove generated video files."""
 import shutil
 from pathlib import Path
 import django_rq
@@ -10,18 +11,21 @@ from .utils import video_output_directory
 
 @receiver(post_save, sender=Video)
 def enqueue_video_processing(sender, instance, created, **kwargs):
+    """Queue processing after a new video transaction is committed."""
     if not created or not instance.video_file:
         return
     transaction.on_commit(lambda: _enqueue_video(instance.pk))
 
 
 def _enqueue_video(video_id):
+    """Add a video-processing job to the default RQ queue."""
     queue = django_rq.get_queue("default", autocommit=True)
     queue.enqueue(process_video, video_id)
 
 
 @receiver(post_delete, sender=Video)
 def delete_video_files(sender, instance, **kwargs):
+    """Delete the source video and generated output after model deletion."""
     if not instance.video_file:
         return
     source = Path(instance.video_file.path)

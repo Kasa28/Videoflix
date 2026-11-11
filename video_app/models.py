@@ -1,6 +1,8 @@
+"""Database models for uploaded and processed videos."""
 from django.db import models
 
 class Video(models.Model):
+    """Store video metadata, source file, and generated thumbnail path."""
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     category = models.CharField(max_length=100, default="Other")
@@ -9,4 +11,5 @@ class Video(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """Return the video title for Django Admin and shell output."""
         return self.title
