@@ -12,7 +12,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 User = get_user_model()
-LOGO_PATH = Path(__file__).parent / "templates" / "auth_app" / "emails" / "logo.svg"
+LOGO_PATH = Path(__file__).parent / "templates" / "auth_app" / "emails" / "logo.png"
 
 
 def encode_user_id(user):
@@ -48,11 +48,11 @@ def send_account_email(user, subject, page, template_name):
 
 def attach_logo(email):
     """Attach the supplied Videoflix logo as an inline related image."""
-    logo = MIMEBase("image", "svg+xml")
+    logo = MIMEBase("image", "png")
     logo.set_payload(LOGO_PATH.read_bytes())
     encoders.encode_base64(logo)
     logo.add_header("Content-ID", "<videoflix-logo>")
-    logo.add_header("Content-Disposition", "inline", filename="logo.svg")
+    logo.add_header("Content-Disposition", "inline", filename="logo.png")
     email.attach(logo)
 
 
