@@ -10,6 +10,13 @@ class Video(models.Model):
     thumbnail = models.FileField(upload_to="thumbnails/", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        """Define default names and newest-first ordering."""
+
+        ordering = ("-created_at",)
+        verbose_name = "Video"
+        verbose_name_plural = "Videos"
+
     def __str__(self):
         """Return the video title for Django Admin and shell output."""
         return self.title
