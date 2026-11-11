@@ -29,6 +29,7 @@ class RegistrationTests(APITestCase):
         self.assertEqual(user.username, user.email)
         self.assertFalse(user.is_active)
         self.assertNotIn("password", response.data)
+        self.assertNotIn("token", response.data)
 
     def test_registration_rejects_duplicate_email(self):
         """Email addresses cannot be registered twice, regardless of case."""
