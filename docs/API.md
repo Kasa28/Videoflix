@@ -68,12 +68,11 @@ Successful response — `201 Created`:
   "user": {
     "id": 1,
     "email": "user@example.com"
-  },
-  "token": "activation-token"
+  }
 }
 ```
 
-The token in the JSON response is informational. Account activation normally happens through the link sent by email.
+The activation token is sent only by email and is never exposed in the API response.
 
 Possible errors:
 
@@ -271,13 +270,29 @@ Successful response — `200 OK`:
     "created_at": "2026-11-10T21:14:33Z",
     "title": "Water see",
     "description": "beautiful",
-    "thumbnail_url": "http://127.0.0.1:8000/media/videos/365704/thumbnail.jpg",
+    "thumbnail_url": "http://127.0.0.1:8000/api/video/3/thumbnail/",
     "category": "See"
   }
 ]
 ```
 
 Without a valid access cookie, the endpoint returns `401 Unauthorized`.
+
+### Get a thumbnail
+
+```http
+GET /api/video/<movie_id>/thumbnail/
+```
+
+Returns the generated JPEG thumbnail through an authenticated API view. This endpoint works independently of Django's debug-mode media serving.
+
+```text
+Status: 200 OK
+Content-Type: image/jpeg
+Body: Binary JPEG image data
+```
+
+The endpoint returns `404 Not Found` while no generated thumbnail exists.
 
 ### Get an HLS playlist
 

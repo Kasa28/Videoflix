@@ -1,5 +1,6 @@
 """Serializers for video metadata returned by the REST API."""
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from video_app.models import Video
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -7,10 +8,14 @@ class VideoSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
 
     def get_thumbnail_url(self, video):
-        """Return an absolute thumbnail URL when processing is complete."""
+        """Return the protected thumbnail endpoint after processing."""
         if not video.thumbnail:
             return None
-        return self.context["request"].build_absolute_uri(video.thumbnail.url)
+        return reverse(
+            "video-thumbnail",
+            kwargs={"movie_id": video.pk},
+            request=self.context["request"],
+        )
 
     class Meta:
         """Define the video fields exposed to authenticated clients."""

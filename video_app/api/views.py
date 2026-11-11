@@ -10,9 +10,8 @@ from .serializers import VideoSerializer
 
 class VideoPartView(ListAPIView):
     """Return video metadata ordered from newest to oldest."""
-
     permission_classes = [IsAuthenticated]
-    queryset = Video.objects.order_by("-created_at")
+    queryset = Video.objects.all()
     serializer_class = VideoSerializer
 
 
@@ -38,6 +37,22 @@ class VideoSegmentView(APIView):
             raise Http404("Segment nicht verfügbar.")
         file = open_video(video, resolution, segment)
         return FileResponse(file, content_type="video/mp2t")
+
+
+class VideoThumbnailView(APIView):
+    """Serve the generated thumbnail independently of debug mode."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, movie_id):
+        """Return the generated JPEG thumbnail for one video."""
+        video = get_object_or_404(Video, id=movie_id)
+        if not video.thumbnail:
+            raise Http404("Thumbnail not available.")
+        try:
+            return FileResponse(video.thumbnail.open("rb"), content_type="image/jpeg")
+        except FileNotFoundError as error:
+            raise Http404("Thumbnail not available.") from error
 
 
 def open_video(video, resolution, filename):

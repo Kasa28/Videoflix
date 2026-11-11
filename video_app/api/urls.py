@@ -1,9 +1,14 @@
 """URL routes for video metadata and protected HLS streaming."""
 from django.urls import path
-from .views import VideoPartView, VideoPlaylistView, VideoSegmentView
+from .views import (VideoPartView, VideoPlaylistView, VideoSegmentView, VideoThumbnailView)
 
 urlpatterns = [
     path("video/", VideoPartView.as_view(), name="video-part"),
+    path(
+        "video/<int:movie_id>/thumbnail/",
+        VideoThumbnailView.as_view(),
+        name="video-thumbnail",
+    ),
     path(
         "video/<int:movie_id>/<str:resolution>/index.m3u8",
         VideoPlaylistView.as_view(),
