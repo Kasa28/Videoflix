@@ -10,9 +10,9 @@ def process_video(video_id):
     folder = video_output_directory(source)
     folder.mkdir(parents=True, exist_ok=True)
     create_thumbnail(source, folder)
+    save_thumbnail(video, folder / "thumbnail.jpg")
     for resolution, height in HLS_RESOLUTIONS.items():
         create_hls(source, folder, resolution, height)
-    save_thumbnail(video, folder / "thumbnail.jpg")
 
 
 def create_thumbnail(source, folder):
@@ -33,10 +33,11 @@ def create_hls(source, folder, resolution, height):
 
 def hls_command(source, target, height):
     return [
-        "ffmpeg", "-y", "-i", str(source),
-        "-vf", f"scale=-2:{height}",
+        "ffmpeg", "-y", "-threads", "2", "-i", str(source),
+        "-map", "0:v:0", "-map", "0:a?", "-filter_threads", "1",
+        "-vf", f"scale=-2:{height}:flags=fast_bilinear,format=yuv420p",
         "-c:v", "libx264", "-crf", "23",
-        "-preset", "fast", "-c:a", "aac",
+        "-preset", "veryfast", "-threads", "2", "-c:a", "aac",
         "-hls_time", "10", "-hls_list_size", "0",
         "-hls_segment_filename", str(target / "segment_%03d.ts"),
         "-f", "hls", str(target / "index.m3u8")

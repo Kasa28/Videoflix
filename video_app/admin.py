@@ -7,3 +7,4 @@ class VideoManagementAdmin(ImportExportModelAdmin):
     list_display = ("id", "title", "category", "created_at")
     list_filter = ("category",)
     search_fields = ("title", "description")
+    exclude = ("thumbnail",)
