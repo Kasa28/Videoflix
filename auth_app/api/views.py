@@ -30,11 +30,11 @@ class RegisterView(PublicAPIView):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token = send_activation_email(user)
-        return Response({
-            "user": {"id": user.id, "email": user.email},
-            "token": token
-        }, status=status.HTTP_201_CREATED)
+        send_activation_email(user)
+        data = {"user": 
+                {"id": user.id,
+                "email": user.email}}
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class ActivateView(PublicAPIView):
@@ -44,7 +44,7 @@ class ActivateView(PublicAPIView):
         """Validate the activation token and enable the user account."""
         user = decode_user(uidb64)
         if not user or not default_token_generator.check_token(user, token):
-            return Response({"detail": "Activation failed."}, status=400)
+            return error_response("Activation failed.", status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save(update_fields=["is_active"])
         return Response({"message": "Account successfully activated."})
@@ -59,7 +59,7 @@ class LoginView(PublicAPIView):
         try:
             serializer.is_valid(raise_exception=True)
         except AuthenticationFailed as error:
-            return Response({"detail": str(error.detail)}, status=401)
+            return error_response(str(error.detail), status.HTTP_401_UNAUTHORIZED)
         user = serializer.validated_data["user"]
         return create_login_response(user)
 
@@ -71,11 +71,15 @@ class RefreshView(PublicAPIView):
         """Validate the refresh cookie and replace the access cookie."""
         token = request.COOKIES.get("refresh_token")
         if not token:
-            return Response({"detail": "Refresh token is missing."}, status=400)
+            return error_response(
+                "Refresh token is missing.", status.HTTP_400_BAD_REQUEST
+            )
         try:
             access = str(RefreshToken(token).access_token)
         except TokenError:
-            return Response({"detail": "Refresh token is invalid."}, status=401)
+            return error_response(
+                "Refresh token is invalid.", status.HTTP_401_UNAUTHORIZED
+            )
         response = Response({"detail": "Token refreshed", "access": access})
         set_token_cookie(response, "access_token", access)
         return response
@@ -88,11 +92,15 @@ class LogoutView(PublicAPIView):
         """Invalidate the current refresh token and end the session."""
         token = request.COOKIES.get("refresh_token")
         if not token:
-            return Response({"detail": "Refresh token is missing."}, status=400)
+            return error_response(
+                "Refresh token is missing.", status.HTTP_400_BAD_REQUEST
+            )
         try:
             RefreshToken(token).blacklist()
         except TokenError:
-            return Response({"detail": "Refresh token is invalid."}, status=401)
+            return error_response(
+                "Refresh token is invalid.", status.HTTP_401_UNAUTHORIZED
+            )
         response = Response({"detail": "Logout successful! All tokens were deleted."})
         clear_auth_cookies(response)
         return response
@@ -121,7 +129,9 @@ class PasswordConfirmView(PublicAPIView):
         """Validate token and password data before updating the user."""
         user = decode_user(uidb64)
         if not user or not default_token_generator.check_token(user, token):
-            return Response({"detail": "Password reset failed."}, status=400)
+            return error_response(
+                "Password reset failed.", status.HTTP_400_BAD_REQUEST
+            )
         serializer = PasswordConfirmSerializer(data=request.data, context={"user": user})
         serializer.is_valid(raise_exception=True)
         user.set_password(serializer.validated_data["new_password"])
@@ -144,3 +154,8 @@ def create_login_response(user):
 def token_data(refresh):
     """Return string representations of a refresh and access token pair."""
     return {"refresh": str(refresh), "access": str(refresh.access_token)}
+
+
+def error_response(message, status_code):
+    """Return a consistent detail response with a DRF status constant."""
+    return Response({"detail": message}, status=status_code)
