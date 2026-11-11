@@ -1,4 +1,11 @@
-Welcome to Videoflix!
+Dear {{ user.email }},
 
-Activate your account using this link:
+Thank you for registering with Videoflix. To complete your registration and verify your email address, open this link:
+
 {{ action_url }}
+
+If you did not create an account with us, please disregard this email.
+
+Best regards,
+
+Your Videoflix Team
