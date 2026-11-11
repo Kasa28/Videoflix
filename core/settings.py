@@ -73,6 +73,7 @@ if DEBUG and not IS_RUNNING_TESTS:
 
 
 def show_debug_toolbar(request):
+    """Display Django Debug Toolbar only when debug mode is enabled."""
     return DEBUG
 
 
