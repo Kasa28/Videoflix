@@ -1,12 +1,9 @@
 """Tests for user registration."""
-
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-
 User = get_user_model()
-
 
 class RegistrationTests(APITestCase):
     """Verify registration validation and user creation."""
@@ -43,9 +40,9 @@ class RegistrationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("non_field_errors", response.data)
 
-    def test_registration_ignores_stale_access_cookie(self):
-        """A stale session cookie cannot block the public registration view."""
-        self.client.cookies["access_token"] = "expired-token"
+    def test_registration_succeeds_with_invalid_access_cookie(self):
+        """Registration remains public when an invalid access cookie exists."""
+        self.client.cookies["access_token"] = "invalid-access-token"
         payload = {
             "email": "stale-cookie@example.com",
             "password": "StrongPass456!",
