@@ -121,7 +121,7 @@ REDIS_PORT=6379
 REDIS_DB=0
 ```
 
-Use `DEBUG=True` only during local development. It lets Django serve generated media files locally. Set `DEBUG=False` in production and serve media through a dedicated web server or object storage.
+Use `DEBUG=True` only during local development, for example to enable the Django Debug Toolbar. Keep `DEBUG=False` in production. Thumbnails and HLS files are delivered through authenticated API endpoints and do not depend on debug-mode media serving.
 
 Never commit `.env`. The file is excluded by `.gitignore`; only `.env.template` belongs in the repository.
 
@@ -211,6 +211,7 @@ Detailed request and response examples are available in [docs/API.md](docs/API.m
 | Method | Endpoint | Description | Authentication |
 | --- | --- | --- | --- |
 | GET | `/api/video/` | Return video metadata ordered by newest first | Access cookie |
+| GET | `/api/video/<movie_id>/thumbnail/` | Return a generated thumbnail | Access cookie |
 | GET | `/api/video/<movie_id>/<resolution>/index.m3u8` | Return an HLS playlist | Access cookie |
 | GET | `/api/video/<movie_id>/<resolution>/<segment>/` | Return an HLS transport-stream segment | Access cookie |
 
