@@ -1,3 +1,1 @@
-from django.shortcuts import render
-
-# Create your views here.
+"""Browser views are not required; authentication is exposed via the API."""
