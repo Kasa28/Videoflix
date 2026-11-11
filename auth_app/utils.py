@@ -1,7 +1,8 @@
 """Utilities for account activation and password reset emails."""
-
+from email import encoders
+from email.mime.base import MIMEBase
+from pathlib import Path
 from urllib.parse import urlencode
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -10,8 +11,8 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
-
 User = get_user_model()
+LOGO_PATH = Path(__file__).parent / "templates" / "auth_app" / "emails" / "logo.svg"
 
 
 def encode_user_id(user):
@@ -41,19 +42,29 @@ def send_account_email(user, subject, page, template_name):
     html = render_to_string(f"auth_app/emails/{template_name}.html", context)
     email = EmailMultiAlternatives(subject, text, settings.DEFAULT_FROM_EMAIL, [user.email])
     email.attach_alternative(html, "text/html")
+    attach_logo(email)
     email.send()
-    return token
+
+
+def attach_logo(email):
+    """Attach the supplied Videoflix logo as an inline related image."""
+    logo = MIMEBase("image", "svg+xml")
+    logo.set_payload(LOGO_PATH.read_bytes())
+    encoders.encode_base64(logo)
+    logo.add_header("Content-ID", "<videoflix-logo>")
+    logo.add_header("Content-Disposition", "inline", filename="logo.svg")
+    email.attach(logo)
 
 
 def send_activation_email(user):
-    """Send the account activation email and return its token."""
-    return send_account_email(
-        user, "Activate your Videoflix account", "activate.html", "activation"
+    """Send the account activation email."""
+    send_account_email(
+        user, "Confirm your email", "activate.html", "activation"
     )
 
 
 def send_password_reset_email(user):
     """Send the password reset email."""
     send_account_email(
-        user, "Reset your Videoflix password", "confirm_password.html", "password_reset"
+        user, "Reset your Password", "confirm_password.html", "password_reset"
     )
