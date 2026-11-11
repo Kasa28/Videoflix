@@ -52,19 +52,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
-        token = RefreshToken.for_user(user)
-        response = Response({
-            "detail": "Login successful",
-            "user": {
-                "id": user.id,
-                "username": user.username
-            }
-        })
-        set_auth_cookies(response, {
-            "refresh": str(token),
-            "access": str(token.access_token)
-        })
-        return response
+        return create_login_response(user)
 
 
 class RefreshView(APIView):
@@ -80,10 +68,7 @@ class RefreshView(APIView):
             access = str(RefreshToken(token).access_token)
         except TokenError:
             return Response({"detail": "Refresh token is invalid."}, status=401)
-        response = Response({
-            "detail": "Token refreshed",
-            "access": access
-        })
+        response = Response({"detail": "Token refreshed", "access": access})
         set_token_cookie(response, "access_token", access)
         return response
 
@@ -136,7 +121,21 @@ class PasswordConfirmView(APIView):
         serializer.is_valid(raise_exception=True)
         user.set_password(serializer.validated_data["new_password"])
         user.save(update_fields=["password"])
+        return Response({"detail": "Your Password has been successfully reset."})
 
-        return Response({
-            "detail": "Your Password has been successfully reset."
-        })
+
+def create_login_response(user):
+    """Build a successful login response and attach both JWT cookies."""
+    refresh = RefreshToken.for_user(user)
+    data = {
+        "detail": "Login successful",
+        "user": {"id": user.id, "username": user.username},
+    }
+    response = Response(data)
+    set_auth_cookies(response, token_data(refresh))
+    return response
+
+
+def token_data(refresh):
+    """Return string representations of a refresh and access token pair."""
+    return {"refresh": str(refresh), "access": str(refresh.access_token)}
